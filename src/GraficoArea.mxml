@@ -21,6 +21,11 @@
 			import mx.controls.CheckBox;
 			import mx.core.FlexGlobals;
 			import mx.events.FlexEvent;
+			import mx.graphics.LinearGradient;
+			import mx.graphics.SolidColor;
+			import mx.graphics.SolidColorStroke;
+			
+			import spark.layouts.BasicLayout;
 			
 			
 			[Bindable]
@@ -59,8 +64,7 @@
 				showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
 				showSelectAllButton = FlexGlobals.topLevelApplication.parameters.show_select_all_button == "true";
 				showDeselectAllButton = FlexGlobals.topLevelApplication.parameters.show_deselect_all_button == "true";
-				
-				
+								
 				var numberOfSeries:int = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
 				
 				var linesArray:Array = dataSt.split("\n");
@@ -74,11 +78,12 @@
 				//creating line series
 				for(var i:int=1; i<firstLineColumns.length;i++){			
 					
-					var lineSeries:AreaSeries = new AreaSeries();
-					lineSeries.yField = ("series" + i);
-					lineSeries.displayName = firstLineColumns[i];
-					lineSeries.setStyle("form", FlexGlobals.topLevelApplication.parameters.series_form);					
-					lineSeriesArray.push(lineSeries);					
+					var areaSeries:AreaSeries = new AreaSeries();
+					areaSeries.yField = ("series" + i);
+					areaSeries.displayName = firstLineColumns[i];
+					areaSeries.setStyle("form", FlexGlobals.topLevelApplication.parameters.series_form);					
+					lineSeriesArray.push(areaSeries);		
+					
 				}
 				
 				areaChart.series = lineSeriesArray;
@@ -125,10 +130,38 @@
 					}
 				}
 				
-				areaChart.visible = true;
+				
+				
+				var colorPalette:String = FlexGlobals.topLevelApplication.parameters.color_palette;
+				if(colorPalette != null){
+					var loader:URLLoader = new URLLoader();
+					loader.addEventListener(Event.COMPLETE, onColorPaletteLoaded);
+					loader.load(new URLRequest(colorPalette));
+				}else{
+					areaChart.visible = true;
+				}			
 				
 				
 			}
+			
+			private function onColorPaletteLoaded(event:Event):void{
+				var dataSt:String = String(event.currentTarget.data);
+				var lines:Array = dataSt.split("\n");
+				
+				for(var i:int=0;i<areaChart.series.length;i++){
+					var areaSeries:AreaSeries = areaChart.series[i];
+					
+					var solidColor:SolidColor = new SolidColor(parseInt(lines[i],16));
+					var stroke:SolidColorStroke = new SolidColorStroke(parseInt(lines[i],16));
+					
+					areaSeries.setStyle("areaFill", solidColor);	
+					areaSeries.setStyle("areaStroke", stroke);	
+					
+				}
+				
+				areaChart.visible = true;
+			}
+			
 			
 			private function onSeriesCheckBoxChange(event:FlexEvent):void{
 				var tempCheckBox:CheckBox = event.currentTarget as CheckBox;

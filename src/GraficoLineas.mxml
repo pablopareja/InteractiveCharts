@@ -21,6 +21,8 @@
 		import mx.controls.CheckBox;
 		import mx.core.FlexGlobals;
 		import mx.events.FlexEvent;
+		import mx.graphics.SolidColor;
+		import mx.graphics.SolidColorStroke;
 		
 		
 		[Bindable]
@@ -125,9 +127,32 @@
 				}
 			}
 											
+			var colorPalette:String = FlexGlobals.topLevelApplication.parameters.color_palette;
+			if(colorPalette != null){
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, onColorPaletteLoaded);
+				loader.load(new URLRequest(colorPalette));
+			}else{
+				lineChart.visible = true;
+			}	
+			
+			
+		}
+		
+		private function onColorPaletteLoaded(event:Event):void{
+			var dataSt:String = String(event.currentTarget.data);
+			var lines:Array = dataSt.split("\n");
+			
+			for(var i:int=0;i<lineChart.series.length;i++){
+				var lineSeries:LineSeries = lineChart.series[i];
+				
+				var stroke:SolidColorStroke = new SolidColorStroke(parseInt(lines[i],16),3);
+				
+				lineSeries.setStyle("lineStroke", stroke);					
+				
+			}
+			
 			lineChart.visible = true;
-			
-			
 		}
 		
 		private function onSeriesCheckBoxChange(event:FlexEvent):void{

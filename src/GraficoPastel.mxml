@@ -22,6 +22,8 @@
 			import mx.controls.CheckBox;
 			import mx.core.FlexGlobals;
 			import mx.events.FlexEvent;
+			import mx.graphics.SolidColor;
+			import mx.graphics.SolidColorStroke;
 			
 			
 			[Bindable]
@@ -86,8 +88,32 @@
 					arrayCollection.addItem(object);					
 				}
 								
-				pieChart.visible = true;				
+				var colorPalette:String = FlexGlobals.topLevelApplication.parameters.color_palette;
+				if(colorPalette != null){
+					var loader:URLLoader = new URLLoader();
+					loader.addEventListener(Event.COMPLETE, onColorPaletteLoaded);
+					loader.load(new URLRequest(colorPalette));
+				}else{
+					pieChart.visible = true;
+				}					
 				
+			}
+			
+			private function onColorPaletteLoaded(event:Event):void{
+				var dataSt:String = String(event.currentTarget.data);
+				var lines:Array = dataSt.split("\n");
+				
+				var pieColors:Array = new Array();
+				var pieSeries:PieSeries = pieChart.series[0];
+				
+				for(var i:int=0;i<lines.length;i++){	
+					pieColors.push(new SolidColor(parseInt(lines[i],16)));					
+				}
+				
+				pieSeries.setStyle("fills",pieColors);					
+				
+				
+				pieChart.visible = true;
 			}
 			
 			private function seriesLabelFunction(data:Object, field:String, index:Number, percentValue:Number):String {
