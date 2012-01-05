@@ -1,0 +1,9 @@
+	Prótesis de cadera	Cataratas	Prótesis de rodilla	Cirugía cardiaca valvular
+2003	72	56	69	64
+2004	73	66	72	55
+2005	74	62	73	71
+2006	74	57	71	68
+2007	62	52	78	69
+2008	77	49	87	82
+2009	58	48	70	67
+2010	53	46	72	72
