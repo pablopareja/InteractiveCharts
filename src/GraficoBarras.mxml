@@ -219,13 +219,15 @@
 					  visible="false"
 					  showDataTips="{showDataTips}"
 					  dataProvider="{arrayCollection}"
-					  >			
+					  width="0" 
+					  height="0">			
 		</mx:BarChart>
 		<mx:ColumnChart id="columnChart" 
 					 visible="false"
 					 showDataTips="{showDataTips}"
 					 dataProvider="{arrayCollection}"
-					 >			
+					 width="0" 
+					 height="0">			
 		</mx:ColumnChart>
 		<mx:Legend id="legend"			   
 				   visible="{showLegend}"

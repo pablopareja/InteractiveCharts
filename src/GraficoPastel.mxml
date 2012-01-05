@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- wrapper/ApplicationParameters.mxml -->
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	creationComplete="init()"
+	width="100%"
+	height="100%">
+	<s:layout> 
+		<s:HorizontalLayout/> 
+	</s:layout>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.charts.CategoryAxis;
+			import mx.charts.LineChart;
+			import mx.charts.series.LineSeries;
+			import mx.charts.series.PieSeries;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			
+			
+			[Bindable]
+			private var showDataTips:Boolean = true;
+			[Bindable]
+			private var showLegend:Boolean = true;
+			[Bindable]
+			private var arrayCollection:ArrayCollection = null;
+			[Bindable]
+			private var pieLabelPosition:String = null;
+			[Bindable]
+			private var explodeRadius:Number = 0.1;
+			[Bindable]
+			private var innerRadius:Number = 0;
+			
+			private var legendName:String = "";
+			
+			
+			/* Assign values to new properties. */
+			private function init():void {
+				
+				var fileName:String = FlexGlobals.topLevelApplication.parameters.file_name;			
+				//reading data file
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, onDataLoaded);
+				loader.load(new URLRequest(fileName));
+				
+				
+			}
+			
+			
+			private function onDataLoaded(event:Event):void{
+				
+				
+				var dataSt:String = String(event.currentTarget.data);
+				
+				showLegend = FlexGlobals.topLevelApplication.parameters.show_legend == "true";
+				showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
+				
+				var numberOfSeries:int = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
+				pieLabelPosition = FlexGlobals.topLevelApplication.parameters.pie_label_position;
+				explodeRadius = parseFloat(FlexGlobals.topLevelApplication.parameters.explode_radius);
+				innerRadius = parseFloat(FlexGlobals.topLevelApplication.parameters.inner_radius);
+				
+				var linesArray:Array = dataSt.split("\n");
+				
+				var firstLine:String = linesArray[0];
+				var firstLineColumns:Array = firstLine.split("\t");						
+				
+				
+				arrayCollection = new ArrayCollection();
+				
+				//--filling data provider----
+				var currentLine:String = linesArray[1];						
+				var currentLineColumns:Array = currentLine.split("\t");		
+				legendName = currentLineColumns[0];
+				
+				for(var j:int = 1; j <= numberOfSeries; j++){
+					var object:Object = new Object();
+					object["value"] = currentLineColumns[j];	
+					object["namefield"] = firstLineColumns[j];
+					arrayCollection.addItem(object);					
+				}
+								
+				pieChart.visible = true;				
+				
+			}
+			
+			private function seriesLabelFunction(data:Object, field:String, index:Number, percentValue:Number):String {
+				var temp:String= (" " + percentValue).substr(0,6);
+				return data["namefield"] + ": " + data["value"] + '\n' + temp + "%";
+			}
+					
+			
+		]]></fx:Script>
+	<s:VGroup width="100%" 
+			  height="100%" > 
+		<mx:PieChart id="pieChart" 
+					  width="100%" 
+					  height="100%" 
+					  visible="false"
+					  showDataTips="{showDataTips}"
+					  dataProvider="{arrayCollection}"
+					  >
+			<mx:series>
+				<mx:PieSeries labelPosition="{pieLabelPosition}"
+							  field="value" 
+							  labelFunction="seriesLabelFunction"
+							  explodeRadius="{explodeRadius}"
+							  innerRadius="{innerRadius}"/>		
+			</mx:series>					
+		</mx:PieChart>		
+	</s:VGroup>
+</s:Application>

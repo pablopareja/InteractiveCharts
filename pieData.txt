@@ -1,0 +1,2 @@
+	Prótesis de cadera	Cataratas	Prótesis de rodilla	Cirugía cardiaca valvular
+Frecuencia	28	180	59	85
