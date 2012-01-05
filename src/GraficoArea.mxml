@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- wrapper/ApplicationParameters.mxml -->
+<s:Application 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	creationComplete="init()"
+	width="100%"
+	height="100%">
+	<s:layout> 
+		<s:HorizontalLayout/> 
+	</s:layout>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.charts.CategoryAxis;
+			import mx.charts.LineChart;
+			import mx.charts.series.AreaSeries;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.CheckBox;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			
+			
+			[Bindable]
+			private var showDataTips:Boolean = true;
+			[Bindable]
+			private var showLegend:Boolean = true;
+			[Bindable]
+			private var showCheckboxes:Boolean = true;
+			[Bindable]
+			private var showSelectAllButton:Boolean = true;
+			[Bindable]
+			private var showDeselectAllButton:Boolean = true;
+			[Bindable]
+			private var arrayCollection:ArrayCollection = null;
+			
+			
+			/* Assign values to new properties. */
+			private function init():void {
+				
+				var fileName:String = FlexGlobals.topLevelApplication.parameters.file_name;			
+				//reading data file
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, onDataLoaded);
+				loader.load(new URLRequest(fileName));
+				
+				
+			}
+			
+			
+			private function onDataLoaded(event:Event):void{
+				
+				
+				var dataSt:String = String(event.currentTarget.data);
+				
+				showLegend = FlexGlobals.topLevelApplication.parameters.show_legend == "true";
+				showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
+				showSelectAllButton = FlexGlobals.topLevelApplication.parameters.show_select_all_button == "true";
+				showDeselectAllButton = FlexGlobals.topLevelApplication.parameters.show_deselect_all_button == "true";
+				
+				
+				var numberOfSeries:int = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
+				
+				var linesArray:Array = dataSt.split("\n");
+				
+				var firstLine:String = linesArray[0];
+				var firstLineColumns:Array = firstLine.split("\t");		
+				
+				
+				var lineSeriesArray:Array = new Array();
+				
+				//creating line series
+				for(var i:int=1; i<firstLineColumns.length;i++){			
+					
+					var lineSeries:AreaSeries = new AreaSeries();
+					lineSeries.yField = ("series" + i);
+					lineSeries.displayName = firstLineColumns[i];
+					lineSeries.setStyle("form", FlexGlobals.topLevelApplication.parameters.series_form);					
+					lineSeriesArray.push(lineSeries);					
+				}
+				
+				areaChart.series = lineSeriesArray;
+				
+				arrayCollection = new ArrayCollection();
+				//var superArray:Array = new Array();
+				
+				//--filling data provider----
+				for(i=1; i<linesArray.length; i++){
+					
+					var currentLine:String = linesArray[i];					
+					var currentLineColumns:Array = currentLine.split("\t");
+					
+					if(currentLineColumns.length > 0){
+						//category field value
+						var object:Object = new Object();
+						object["categoryfield"] = currentLineColumns[0];
+						
+						for(var j:int = 1; j <= numberOfSeries; j++){
+							object[("series" + j)] = currentLineColumns[j];						
+						}
+						
+						arrayCollection.addItem(object);
+					}
+					
+					
+				}
+				
+				var categoryAxis:CategoryAxis = new CategoryAxis();
+				categoryAxis.categoryField = "categoryfield";
+				categoryAxis.dataProvider = arrayCollection;
+				areaChart.horizontalAxis = categoryAxis;
+				
+				showCheckboxes = FlexGlobals.topLevelApplication.parameters.show_checkboxes == "true";
+				
+				if(showCheckboxes){
+					for(i=0;i < areaChart.series.length; i++){
+						var lSeries:AreaSeries = areaChart.series[i];
+						var checkbox:CheckBox = new CheckBox();
+						checkbox.label = lSeries.displayName;
+						checkbox.selected = true;
+						checkbox.addEventListener(FlexEvent.UPDATE_COMPLETE,onSeriesCheckBoxChange);
+						checkboxesComponent.addElement(checkbox);
+					}
+				}
+				
+				areaChart.visible = true;
+				
+				
+			}
+			
+			private function onSeriesCheckBoxChange(event:FlexEvent):void{
+				var tempCheckBox:CheckBox = event.currentTarget as CheckBox;
+				for(var i:int=0;i < areaChart.series.length; i++){
+					var lSeries:AreaSeries = areaChart.series[i];
+					if(lSeries.displayName == tempCheckBox.label){
+						lSeries.visible = tempCheckBox.selected;
+					}
+				}
+				
+			}
+			
+			private function selectAllCheckboxes(selectedValue:Boolean):void{
+				for(var i:int=0; i<checkboxesComponent.numChildren; i++){
+					var obj:DisplayObject = checkboxesComponent.getChildAt(i);
+					if(obj is CheckBox){
+						(obj as CheckBox).selected = selectedValue;
+					}
+				}
+			}				
+			
+		]]></fx:Script>
+	<s:VGroup width="100%" 
+			  height="100%" > 
+		<mx:AreaChart id="areaChart" 
+					  width="100%" 
+					  height="100%" 
+					  visible="false"
+					  showDataTips="{showDataTips}"
+					  dataProvider="{arrayCollection}"
+					  >
+		</mx:AreaChart>
+		<mx:Legend id="legend"			   
+				   visible="{showLegend}"
+				   dataProvider="{areaChart}"/>
+	</s:VGroup>
+	<s:VGroup id="checkboxesComponent" 
+			  visible="{showCheckboxes}">	
+		<s:Button label="Select all" 
+				  click="selectAllCheckboxes(true)"
+				  visible="{showSelectAllButton}"/>
+		<s:Button label="Deselect all" 
+				  click="selectAllCheckboxes(false)"
+				  visible="{showDeselectAllButton}"/>
+	</s:VGroup>
+</s:Application>
