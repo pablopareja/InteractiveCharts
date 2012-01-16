@@ -4,7 +4,7 @@
 	xmlns:fx="http://ns.adobe.com/mxml/2009" 
 	xmlns:mx="library://ns.adobe.com/flex/mx" 
 	xmlns:s="library://ns.adobe.com/flex/spark" 
-	creationComplete="init()"
+	creationComplete="loadVars()"
 	width="100%"
 	height="100%">
 	<s:layout> 
@@ -14,18 +14,16 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.charts.CategoryAxis;
+			import mx.charts.Legend;
 			import mx.charts.LineChart;
-			import mx.charts.series.AreaSeries;
+			import mx.charts.series.LineSeries;
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.CheckBox;
 			import mx.core.FlexGlobals;
 			import mx.events.FlexEvent;
-			import mx.graphics.LinearGradient;
 			import mx.graphics.SolidColor;
 			import mx.graphics.SolidColorStroke;
-			
-			import spark.layouts.BasicLayout;
 			
 			
 			[Bindable]
@@ -38,45 +36,74 @@
 			private var showSelectAllButton:Boolean = true;
 			[Bindable]
 			private var showDeselectAllButton:Boolean = true;
-			[Bindable]
-			private var arrayCollection:ArrayCollection = null;
-			private var numberOfSeries:int;
+			private var fileName:String;
+			private var numberOfSeries:int
 			private var seriesForm:String;
 			private var colorPalette:String;
-			private var fileName:String;
+			
+			[Bindable]
+			private var arrayCollection:ArrayCollection = null;
+			
+			
+			private function loadVars():void{
+				var file:String = "vars.txt";		
+				//reading data file
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, onVarsLoaded);
+				loader.load(new URLRequest(file));
+			}
+			
+			private function onVarsLoaded(event:Event):void{				
+				
+				var dataSt:String = String(event.currentTarget.data);				
+				var varsArray:Array = dataSt.split(',');
+				
+				for(var i:int=0; i<varsArray.length; i++){
+					var vals:Array = varsArray[i].split('=');
+					
+					if(vals[0] == "show_legend"){
+						showLegend = (vals[1] == "true");
+					}else if(vals[0] == "show_data_tips"){
+						showDataTips = (vals[1] == "true");
+					}else if(vals[0] == "show_select_all_butto"){
+						showSelectAllButton = (vals[1] == "true");
+					}else if(vals[0] == "show_deselect_all_button"){
+						showDeselectAllButton = (vals[1] == "true");
+					}else if(vals[0] == "number_of_series"){
+						numberOfSeries = vals[1];
+					}else if(vals[0] == "show_checkboxes"){
+						showCheckboxes = (vals[1] == "true");
+					}else if(vals[0] == "color_palette"){
+						colorPalette = vals[1];
+					}else if(vals[0] == "file_name"){
+						fileName = vals[1];
+					}else if(vals[0] == "series_form"){
+						seriesForm = vals[1];
+					}
+				}
+				
+				init();
+				
+			}
 			
 			
 			/* Assign values to new properties. */
 			private function init():void {
 				
-				initVars(); 		
 				//reading data file
 				var loader:URLLoader = new URLLoader();
 				loader.addEventListener(Event.COMPLETE, onDataLoaded);
 				loader.load(new URLRequest(fileName));
-				
-				
+								
 			}
-			
-			private function initVars():void{
-				
-				fileName = FlexGlobals.topLevelApplication.parameters.file_name;	
-				showLegend = FlexGlobals.topLevelApplication.parameters.show_legend == "true";
-				showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
-				showSelectAllButton = FlexGlobals.topLevelApplication.parameters.show_select_all_button == "true";
-				showDeselectAllButton = FlexGlobals.topLevelApplication.parameters.show_deselect_all_button == "true";
-				seriesForm = FlexGlobals.topLevelApplication.parameters.series_form;				
-				numberOfSeries = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
-				showCheckboxes = FlexGlobals.topLevelApplication.parameters.show_checkboxes == "true";
-				colorPalette = FlexGlobals.topLevelApplication.parameters.color_palette;
-				
-			}
+						
 			
 			private function onDataLoaded(event:Event):void{
 				
-				initVars();
 				
 				var dataSt:String = String(event.currentTarget.data);
+				
+				
 				
 				var linesArray:Array = dataSt.split("\n");
 				
@@ -89,16 +116,14 @@
 				//creating line series
 				for(var i:int=1; i<firstLineColumns.length;i++){			
 					
-					var areaSeries:AreaSeries = new AreaSeries();
-					areaSeries.yField = ("series" + i);
-					areaSeries.displayName = firstLineColumns[i];
-					
-					areaSeries.setStyle("form", seriesForm);					
-					lineSeriesArray.push(areaSeries);		
-					
+					var lineSeries:LineSeries = new LineSeries();
+					lineSeries.yField = ("series" + i);
+					lineSeries.displayName = firstLineColumns[i];
+					lineSeries.setStyle("form", seriesForm);					
+					lineSeriesArray.push(lineSeries);					
 				}
 				
-				areaChart.series = lineSeriesArray;
+				lineChart.series = lineSeriesArray;
 				
 				arrayCollection = new ArrayCollection();
 				//var superArray:Array = new Array();
@@ -119,21 +144,20 @@
 						}
 						
 						arrayCollection.addItem(object);
-					}
-					
+					}													
 					
 				}
 				
 				var categoryAxis:CategoryAxis = new CategoryAxis();
 				categoryAxis.categoryField = "categoryfield";
 				categoryAxis.dataProvider = arrayCollection;
-				areaChart.horizontalAxis = categoryAxis;
+				lineChart.horizontalAxis = categoryAxis;
 				
 				
 				
 				if(showCheckboxes){
-					for(i=0;i < areaChart.series.length; i++){
-						var lSeries:AreaSeries = areaChart.series[i];
+					for(i=0;i < lineChart.series.length; i++){
+						var lSeries:LineSeries = lineChart.series[i];
 						var checkbox:CheckBox = new CheckBox();
 						checkbox.label = lSeries.displayName;
 						checkbox.selected = true;
@@ -143,16 +167,19 @@
 				}
 				
 				
-				
-				
 				if(colorPalette != null){
 					var loader:URLLoader = new URLLoader();
 					loader.addEventListener(Event.COMPLETE, onColorPaletteLoaded);
 					loader.load(new URLRequest(colorPalette));
 				}else{
-					areaChart.visible = true;
-					legend.dataProvider = areaChart;
-				}			
+					lineChart.visible = true;
+					if(showLegend){
+						var legend:Legend = new Legend();
+						legend.dataProvider = lineChart;
+						legend.visible = true;
+						vGroup.addElement(legend);
+					}
+				}	
 				
 				
 			}
@@ -161,26 +188,29 @@
 				var dataSt:String = String(event.currentTarget.data);
 				var lines:Array = dataSt.split("\n");
 				
-				for(var i:int=0;i<areaChart.series.length;i++){
-					var areaSeries:AreaSeries = areaChart.series[i];
+				for(var i:int=0;i<lineChart.series.length;i++){
+					var lineSeries:LineSeries = lineChart.series[i];
 					
-					var solidColor:SolidColor = new SolidColor(parseInt(lines[i],16));
-					var stroke:SolidColorStroke = new SolidColorStroke(parseInt(lines[i],16));
+					var stroke:SolidColorStroke = new SolidColorStroke(parseInt(lines[i],16),3);
 					
-					areaSeries.setStyle("areaFill", solidColor);	
-					areaSeries.setStyle("areaStroke", stroke);	
+					lineSeries.setStyle("lineStroke", stroke);	
+					
 					
 				}
-				
-				areaChart.visible = true;
-				legend.dataProvider = areaChart;
+								
+				lineChart.visible = true;
+				if(showLegend){
+					var legend:Legend = new Legend();
+					legend.dataProvider = lineChart;
+					legend.visible = true;
+					vGroup.addElement(legend);
+				}
 			}
-			
 			
 			private function onSeriesCheckBoxChange(event:FlexEvent):void{
 				var tempCheckBox:CheckBox = event.currentTarget as CheckBox;
-				for(var i:int=0;i < areaChart.series.length; i++){
-					var lSeries:AreaSeries = areaChart.series[i];
+				for(var i:int=0;i < lineChart.series.length; i++){
+					var lSeries:LineSeries = lineChart.series[i];
 					if(lSeries.displayName == tempCheckBox.label){
 						lSeries.visible = tempCheckBox.selected;
 					}
@@ -199,17 +229,16 @@
 			
 		]]></fx:Script>
 	<s:VGroup width="100%" 
-			  height="100%" > 
-		<mx:AreaChart id="areaChart" 
+			  height="100%" 
+			  id="vGroup"> 
+		<mx:LineChart id="lineChart" 
 					  width="100%" 
 					  height="100%" 
 					  visible="false"
 					  showDataTips="{showDataTips}"
 					  dataProvider="{arrayCollection}"
 					  >
-		</mx:AreaChart>
-		<mx:Legend id="legend"			   
-				   visible="{showLegend}"/>
+		</mx:LineChart>
 	</s:VGroup>
 	<s:VGroup id="checkboxesComponent" 
 			  visible="{showCheckboxes}">	

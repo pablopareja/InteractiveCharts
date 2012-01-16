@@ -35,19 +35,39 @@
 		private var showSelectAllButton:Boolean = true;
 		[Bindable]
 		private var showDeselectAllButton:Boolean = true;
+		private var fileName:String;
+		private var numberOfSeries:int
+		private var seriesForm:String;
+		private var colorPalette:String;
+		
 		[Bindable]
 		private var arrayCollection:ArrayCollection = null;
+		
 		
 		
 		/* Assign values to new properties. */
 		private function init():void {
 			
-			var fileName:String = FlexGlobals.topLevelApplication.parameters.file_name;			
+			initVars();		
 			//reading data file
 			var loader:URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, onDataLoaded);
 			loader.load(new URLRequest(fileName));
 			
+			
+		}
+		
+		private function initVars():void{
+			
+			seriesForm = FlexGlobals.topLevelApplication.parameters.series_form;
+			numberOfSeries = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
+			fileName = FlexGlobals.topLevelApplication.parameters.file_name;
+			showLegend = FlexGlobals.topLevelApplication.parameters.show_legend == "true";
+			showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
+			showSelectAllButton = FlexGlobals.topLevelApplication.parameters.show_select_all_button == "true";
+			showDeselectAllButton = FlexGlobals.topLevelApplication.parameters.show_deselect_all_button == "true";
+			showCheckboxes = FlexGlobals.topLevelApplication.parameters.show_checkboxes == "true";
+			colorPalette = FlexGlobals.topLevelApplication.parameters.color_palette;
 			
 		}
 		
@@ -57,13 +77,7 @@
 			
 			var dataSt:String = String(event.currentTarget.data);
 			
-			showLegend = FlexGlobals.topLevelApplication.parameters.show_legend == "true";
-			showDataTips = FlexGlobals.topLevelApplication.parameters.show_data_tips == "true";
-			showSelectAllButton = FlexGlobals.topLevelApplication.parameters.show_select_all_button == "true";
-			showDeselectAllButton = FlexGlobals.topLevelApplication.parameters.show_deselect_all_button == "true";
 			
-				
-			var numberOfSeries:int = parseInt(FlexGlobals.topLevelApplication.parameters.number_of_series);
 				
 			var linesArray:Array = dataSt.split("\n");
 				
@@ -79,7 +93,7 @@
 				var lineSeries:LineSeries = new LineSeries();
 				lineSeries.yField = ("series" + i);
 				lineSeries.displayName = firstLineColumns[i];
-				lineSeries.setStyle("form", FlexGlobals.topLevelApplication.parameters.series_form);					
+				lineSeries.setStyle("form", seriesForm);					
 				lineSeriesArray.push(lineSeries);					
 			}
 			
@@ -104,8 +118,7 @@
 					}
 					
 					arrayCollection.addItem(object);
-				}
-													
+				}													
 				
 			}
 			
@@ -114,7 +127,7 @@
 			categoryAxis.dataProvider = arrayCollection;
 			lineChart.horizontalAxis = categoryAxis;
 			
-			showCheckboxes = FlexGlobals.topLevelApplication.parameters.show_checkboxes == "true";
+			
 			
 			if(showCheckboxes){
 				for(i=0;i < lineChart.series.length; i++){
@@ -127,13 +140,14 @@
 				}
 			}
 											
-			var colorPalette:String = FlexGlobals.topLevelApplication.parameters.color_palette;
+			
 			if(colorPalette != null){
 				var loader:URLLoader = new URLLoader();
 				loader.addEventListener(Event.COMPLETE, onColorPaletteLoaded);
 				loader.load(new URLRequest(colorPalette));
 			}else{
 				lineChart.visible = true;
+				legend.dataProvider = lineChart;
 			}	
 			
 			
@@ -153,6 +167,7 @@
 			}
 			
 			lineChart.visible = true;
+			legend.dataProvider = lineChart;
 		}
 		
 		private function onSeriesCheckBoxChange(event:FlexEvent):void{
