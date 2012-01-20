@@ -17,12 +17,17 @@
 		import mx.charts.LineChart;
 		import mx.charts.series.LineSeries;
 		import mx.collections.ArrayCollection;
+		import mx.containers.Canvas;
 		import mx.controls.Alert;
 		import mx.controls.CheckBox;
+		import mx.controls.Label;
 		import mx.core.FlexGlobals;
 		import mx.events.FlexEvent;
 		import mx.graphics.SolidColor;
 		import mx.graphics.SolidColorStroke;
+		import mx.graphics.Stroke;
+		
+		import spark.components.HGroup;
 		
 		
 		[Bindable]
@@ -42,6 +47,8 @@
 		
 		[Bindable]
 		private var arrayCollection:ArrayCollection = null;
+		
+		private var legendColorCanvasArray:Array = new Array();
 		
 		
 		
@@ -76,8 +83,6 @@
 			
 			
 			var dataSt:String = String(event.currentTarget.data);
-			
-			
 				
 			var linesArray:Array = dataSt.split("\n");
 				
@@ -94,7 +99,8 @@
 				lineSeries.yField = ("series" + i);
 				lineSeries.displayName = firstLineColumns[i];
 				lineSeries.setStyle("form", seriesForm);					
-				lineSeriesArray.push(lineSeries);					
+				lineSeriesArray.push(lineSeries);	
+				
 			}
 			
 			lineChart.series = lineSeriesArray;
@@ -139,7 +145,24 @@
 					checkboxesComponent.addElement(checkbox);
 				}
 			}
-											
+					
+			if(showLegend){				
+				for(i=0; i<firstLineColumns.length;i++){						
+					
+					var legendHGroup:HGroup = new HGroup();		
+					var seriesLabel:Label = new Label();
+					seriesLabel.text = firstLineColumns[i+1];
+					var colorCanvas:Canvas = new Canvas();
+					colorCanvas.width = 15;
+					colorCanvas.height = 20;					
+					legendColorCanvasArray.push(colorCanvas);
+					legendHGroup.addElement(colorCanvas);
+					legendHGroup.addElement(seriesLabel);
+					legendVGroup.addElement(legendHGroup);
+					
+				}				
+			}
+			
 			
 			if(colorPalette != null){
 				var loader:URLLoader = new URLLoader();
@@ -147,7 +170,10 @@
 				loader.load(new URLRequest(colorPalette));
 			}else{
 				lineChart.visible = true;
-				legend.dataProvider = lineChart;
+				if(showLegend){
+					callLater(updateLegendColors);
+				}				
+				//legend.dataProvider = lineChart;
 			}	
 			
 			
@@ -162,12 +188,30 @@
 				
 				var stroke:SolidColorStroke = new SolidColorStroke(parseInt(lines[i],16),3);
 				
-				lineSeries.setStyle("lineStroke", stroke);					
-				
+				lineSeries.setStyle("lineStroke", stroke);				
+								
 			}
 			
 			lineChart.visible = true;
-			legend.dataProvider = lineChart;
+			if(showLegend){
+				callLater(updateLegendColors);
+			}			
+			//legend.dataProvider = lineChart;
+		}
+		private function updateLegendColors():void{
+			for(var i:int=0;i<lineChart.series.length;i++){
+				var lineSeries:LineSeries = lineChart.series[i];
+				var stroke:SolidColorStroke = null;
+				if(colorPalette != null){
+					stroke = lineSeries.getStyle("lineStroke") as SolidColorStroke;
+				}else{
+					stroke = lineSeries.getStyle("stroke") as SolidColorStroke;
+				}				
+				//Alert.show(""+stroke);
+				legendColorCanvasArray[i].setStyle("backgroundColor", "#" + stroke.color.toString(16));	
+				
+			}
+			
 		}
 		
 		private function onSeriesCheckBoxChange(event:FlexEvent):void{
@@ -201,9 +245,11 @@
 					  dataProvider="{arrayCollection}"
 					  >
 		</mx:LineChart>
-		<mx:Legend id="legend"			   
+		<s:VGroup id="legendVGroup">			
+		</s:VGroup>
+		<!--<mx:Legend id="legend"			   
 				   visible="{showLegend}"
-				   dataProvider="{lineChart}"/>
+				   dataProvider="{lineChart}"/>-->
 	</s:VGroup>
 	<s:VGroup id="checkboxesComponent" 
 			  visible="{showCheckboxes}">	
@@ -213,5 +259,5 @@
 		<s:Button label="Deselect all" 
 				  click="selectAllCheckboxes(false)"
 				  visible="{showDeselectAllButton}"/>
-	</s:VGroup>
+	</s:VGroup>	
 </s:Application>
